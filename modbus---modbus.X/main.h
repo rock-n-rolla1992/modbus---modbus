@@ -7,9 +7,9 @@
 #include "st_func_peripheral.h"
 
 //версия софта
-#define soft_ver_S0 1
+#define soft_ver_S0 0
 #define soft_ver_S1 0
-#define soft_ver_S2 0
+#define soft_ver_S2 1
 
 #define DEBUG 1
 
@@ -85,10 +85,10 @@ typedef struct {
 #ifndef MAIN_C_DATA
 extern UINT8 lock_signal;
 
-extern UINT8 add_dev[2];
+extern UINT8 add_dev[32];
 extern UINT8 baud_rate[2];
 extern UINT8 parity[2];
-extern UINT8 add_dev_reg[2];
+extern UINT8 add_dev_reg[32];
 extern UINT8 baud_rate_reg[2];
 extern UINT8 parity_reg[2];
 extern UINT8 err_conf;
@@ -107,6 +107,9 @@ extern UINT16 ver;
 void func_initialization();
 void func_reset_all();
 void func_save_all();
+void ModBusTxRxFunc2();
+void act_sluice(UINT8 index_mb, UINT8 temp_Number_Rx_Byte);
+void set_baud_rate2();
 
 
 #include "Modbus.h"

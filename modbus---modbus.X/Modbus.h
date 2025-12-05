@@ -9,7 +9,7 @@
 #define CF_write_some 0x10
 
 #define RX_BUF_SIZE 74
-#define MB_MEMORY_SIZE 80
+//#define MB_MEMORY_SIZE 80
 
 //коды режимов
 #define MODE_CNT_PULSE 0
@@ -80,13 +80,13 @@ extern UINT8 MB_eepr_add[sizeof (MB_Set)/sizeof(MB_Set[0])];
 void set_baud_rate();
 UINT8 error_ad(UINT16 add_reg_get_set, UINT8 Modif, UINT8 Number_reg, UINT16 * ad);
 void ModBusTxRxFunc();
-void errorLogical(UINT8 codeError);
-void actCF_write_some();
-void actCF_write();
-void actCF_read_some();
-void CalculTX9Dbit();
+void errorLogical(UINT8 codeError, UINT8 index_mb);
+void actCF_write_some(UINT8 index_mb);
+void actCF_write(UINT8 index_mb);
+void actCF_read_some(UINT8 index_mb);
+void CalculTX9Dbit(UINT8 index_mb);
 void func_chek_value(UINT16 *value, UINT16 temp, UINT16 lo, UINT16 hi, UINT8 add);
-void actCodeFunc();
+void actCodeFunc(UINT8 index_mb);
 UINT16 crc_chk(UINT8* byte, UINT8 length);
 
 #ifdef	__cplusplus

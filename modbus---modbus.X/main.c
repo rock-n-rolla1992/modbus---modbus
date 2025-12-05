@@ -70,14 +70,14 @@ UINT8 lock_signal = 0;
 UINT16 Timer_Interrupt_3 = 0;
 
 
-automat_state_t automat_state[] = {func_save_all, ModBusTxRxFunc};
+automat_state_t automat_state[] = {func_save_all, ModBusTxRxFunc, ModBusTxRxFunc2};
 
 UINT8 Switch_Transsmit_Recieve[2] = 0;
 
-UINT8 add_dev[2];
+UINT8 add_dev[32];
 UINT8 baud_rate[2];
 UINT8 parity[2];
-UINT8 add_dev_reg[2];
+UINT8 add_dev_reg[32];
 UINT8 baud_rate_reg[2];
 UINT8 parity_reg[2];
 UINT8 err_conf;
@@ -152,6 +152,7 @@ void main(void)
         eepromWrite(BEGIN_EEPR_ADD, 0);
     }
     set_baud_rate();
+    set_baud_rate2();
 
 
 #if 0
@@ -196,37 +197,41 @@ void main(void)
     }
 }
 
-void CalculTX9Dbit2()
+void act_sluice(UINT8 index_mb, UINT8 temp_Number_Rx_Byte)
 {
-    UINT8 cntTB = 0;
-    while (cntTB < size_Tx_frame[1])
-    {
-        UINT8 cntBit = 0;
-        UINT8 TempResult = Rx_Tx_data[1][cntTB] & 1;
-        while (cntBit < 7)
-        {
-
-            cntBit++;
-            TempResult ^= (Rx_Tx_data[1][cntTB] >> cntBit & 1);
-        }
-        TX9Dbit[1][cntTB] = TempResult;
-        cntTB++;
-    }
-}
-
-void actCodeFunc2()
-{
-  
     /* if (COMMAND_REG == 10400)
      {
          COMMAND_REG = 0;
          eepromWrite(TEST_MOD_NOT_OK_ADD, 1);
      }*/
-    Number_Tx_Byte[1] = 0;
-    CalculTX9Dbit2();
-    TranssmitOrRecieve_2 = Transsmit;
-    //LED.led_Blue = 1;
-    TX2IE = 1;
+    Number_Tx_Byte[index_mb] = 0;
+
+    if (index_mb == 0)
+    {
+        size_Tx_frame[1] = temp_Number_Rx_Byte;
+        for (UINT8 index = 0; index < size_Tx_frame[1]; index++)
+        {
+            Rx_Tx_data[1][index] = Rx_Tx_data[0][index];
+        }
+        CalculTX9Dbit(1);
+        Number_Tx_Byte[1] = 0;
+        TranssmitOrRecieve_2 = Transsmit;
+        //LED.led_Blue = 1;
+        TX2IE = 1;
+    } else if (index_mb == 1)
+    {
+        size_Tx_frame[0] = temp_Number_Rx_Byte;
+        for (UINT8 index = 0; index < size_Tx_frame[0]; index++)
+        {
+            Rx_Tx_data[0][index] = Rx_Tx_data[1][index];
+        }
+        CalculTX9Dbit(0);
+        Number_Tx_Byte[0] = 0;
+        TranssmitOrRecieve = Transsmit;
+        //LED.led_Blue = 1;
+        TX1IE = 1;
+    }
+
 }
 
 void ModBusTxRxFunc2()
@@ -262,8 +267,15 @@ void ModBusTxRxFunc2()
                 UINT16 crcRx = crc_chk(Rx_Tx_data[1], temp_Number_Rx_Byte - 2);
                 if (crcRx == (Rx_Tx_data[1][temp_Number_Rx_Byte - 1] << 8 | Rx_Tx_data[1][temp_Number_Rx_Byte - 2]))
                 {
-                    RCSTA2bits.CREN = 0;
-                    actCodeFunc2();
+                    if (Rx_Tx_data[1][0] == 247 && !lock_signal)
+                    {
+                        RCSTA2bits.CREN = 0;
+                        actCodeFunc(1);
+                    } else
+                    {
+                        RCSTA1bits.CREN = RCSTA2bits.CREN = 0;
+                        act_sluice(1, temp_Number_Rx_Byte);
+                    }
                 }
             }
             Number_Rx_Byte[1] = 0;
@@ -275,7 +287,11 @@ void ModBusTxRxFunc2()
 
 void set_baud_rate2()
 {
-    add_dev[1] = add_dev_reg[1];
+
+    for (UINT8 index = 0; index < sizeof (add_dev) / sizeof (add_dev[0]); index++)
+    {
+        add_dev[index] = add_dev_reg[index];
+    }
     baud_rate[1] = baud_rate_reg[1];
     parity[1] = parity_reg[1];
     UINT32 Speed_devise_bit_sek = CALCUL_SPEED_DEV_BIT_S(baud_rate[1]);
@@ -370,6 +386,18 @@ void func_reset_all()
     }
 }
 
+UINT8 check_add(UINT8 receiv_byte)
+{
+    for (UINT8 * add_add = add_dev; add_add <= &add_dev[31]; add_add++)
+    {
+        if (*add_add == receiv_byte)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void low_priority interrupt func_interrupt_L(void)
 {
     //DEBUG_PIN = 1;
@@ -405,11 +433,14 @@ void low_priority interrupt func_interrupt_L(void)
             }
         } else
         {
-            if ((modbus_timeOut[0].timer > TimeOutFrame_3_5[0]) && receiv_byte == (UINT8) add_dev)
+            if ((modbus_timeOut[0].timer > TimeOutFrame_3_5[0]))
             {
-                //LED_RED = 1;
-                Rx_Tx_data[0][0] = receiv_byte;
-                Number_Rx_Byte[0] = 1;
+                if (check_add(receiv_byte))
+                {
+                    //LED_RED = 1;
+                    Rx_Tx_data[0][0] = receiv_byte;
+                    Number_Rx_Byte[0] = 1;
+                }
             }
         }
         modbus_timeOut[0].timer = 0;
@@ -422,7 +453,7 @@ void low_priority interrupt func_interrupt_L(void)
         }
         //DEBUG_PIN = 0;
     }
-    
+
     if (TX2IE && TX2IF)
     {
         if (Number_Tx_Byte[1] < size_Tx_frame[1])
@@ -454,11 +485,14 @@ void low_priority interrupt func_interrupt_L(void)
             }
         } else
         {
-            if ((modbus_timeOut[1].timer > TimeOutFrame_3_5[1]) && receiv_byte == (UINT8) add_dev)
+            if ((modbus_timeOut[1].timer > TimeOutFrame_3_5[1]))
             {
-                //LED_RED = 1;
-                Rx_Tx_data[1][0] = receiv_byte;
-                Number_Rx_Byte[1] = 1;
+                if (check_add(receiv_byte))
+                {
+                    //LED_RED = 1;
+                    Rx_Tx_data[1][0] = receiv_byte;
+                    Number_Rx_Byte[1] = 1;
+                }
             }
         }
         modbus_timeOut[0].timer = 0;
@@ -471,7 +505,7 @@ void low_priority interrupt func_interrupt_L(void)
         }
         //DEBUG_PIN = 0;
     }
-   
+
     //DEBUG_PIN = 0;
 }
 
@@ -488,7 +522,7 @@ void high_priority interrupt func_interrupt_h(void)
             // LED.led_Blue = 0;
             modbus_timeOut[0].timer = TimeOutFrame_3_5[0];
             Switch_Transsmit_Recieve[0] = 0;
-            RCSTA1bits.CREN = 1; //UART включение приемника
+            RCSTA1bits.CREN = RCSTA2bits.CREN = 1; //UART включение приемника
         }
         if (Switch_Transsmit_Recieve[1] && TXSTA2bits.TRMT) //переключение приемопередатчика с передачи на прием
         {
@@ -496,7 +530,7 @@ void high_priority interrupt func_interrupt_h(void)
             // LED.led_Blue = 0;
             modbus_timeOut[1].timer = TimeOutFrame_3_5[1];
             Switch_Transsmit_Recieve[1] = 0;
-            RCSTA2bits.CREN = 1; //UART включение приемника
+            RCSTA1bits.CREN = RCSTA2bits.CREN = 1; //UART включение приемника
         }
 
 
@@ -518,7 +552,7 @@ void high_priority interrupt func_interrupt_h(void)
                 modbus_timeOut[1].timer++;
             }
         }
-        
+
 
         Timer_Interrupt_3++;
         CCP4IF = 0;

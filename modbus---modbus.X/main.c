@@ -65,12 +65,12 @@
 // CONFIG7H
 #pragma config EBTRB = OFF      // Boot Block Table Read Protection bit (Boot Block (000000-0007FFh) not protected from table reads executed in other blocks)
 
+UINT8 service_mode = 0;
 UINT8 lock_signal = 0;
+UINT8 global_timer_ms = 0;
 
-UINT16 Timer_Interrupt_3 = 0;
 
-
-automat_state_t automat_state[] = {func_save_all, ModBusTxRxFunc, ModBusTxRxFunc2};
+automat_state_t automat_state[] = {func_save_all, blinker_func};
 
 UINT8 Switch_Transsmit_Recieve[2] = 0;
 
@@ -82,6 +82,13 @@ UINT8 baud_rate_reg[2];
 UINT8 parity_reg[2];
 UINT8 err_conf;
 UINT8 cfg_save;
+
+UINT8 add_dev_begin_1;
+UINT8 add_dev_end_1;
+UINT8 add_dev_begin_2;
+UINT8 add_dev_end_2;
+UINT8 add_dev_begin_3;
+UINT8 add_dev_end_3;
 
 UINT8 all_reset;
 UINT16 debug_var;
@@ -103,26 +110,20 @@ void main(void)
     OSCCONbits.SCS = 0;
     OSCTUNEbits.PLLEN = 1; // 16*4 MGz
 
-    ANSB0 = DIG;
-    ANSB1 = DIG;
-    ANSB3 = DIG;
-    ANSB4 = DIG;
-    ANSA3 = DIG;
-    ANSB2 = DIG;
     ANSC7 = DIG;
-    ANSA5 = DIG;
 
-    TRISA4 = OUT;
-    TRISC1 = OUT;
-    TRISC2 = OUT;
-    TRISC3 = OUT;
     TRISC5 = OUT;
-    TRISB7 = OUT;
-    TRISB6 = OUT;
-    TRISA2 = OUT;
     TRISB5 = OUT;
+    TRISC6 = OUT;
+    TRISB6 = OUT;
     TRISA0 = OUT;
     TRISA1 = OUT;
+    //TRISA2 = OUT;
+
+    INTCON2bits.nRBPU = 0;
+    WPUE3 = 1;
+    WPUB = 0;
+
 
     CCP4CONbits.CCP4M = 0b1011;
     CCPTMRS1bits.C4TSEL = 0;
@@ -132,27 +133,21 @@ void main(void)
     CCP4IP = 1;
 
 #if 0
-    UINT16 temp = 33;
-    for (UINT8 index = 0; index < MB_MEMORY_SIZE; index++)
-    {
-
-
-        EEPR_WRITE_VAR(temp, temp);
-        temp += 2;
-    }
-    while (1);
+    __delay_us(10);
+    check_add(1);
 #endif
 
 
-    //ResetAdress();
+
     func_initialization();
+    Reset_Lock();
     if (eepromRead(BEGIN_EEPR_ADD))
     {
         func_reset_all();
         eepromWrite(BEGIN_EEPR_ADD, 0);
     }
-    set_baud_rate();
-    set_baud_rate2();
+    set_baud_rate(1);
+    set_baud_rate(2);
 
 
 #if 0
@@ -165,8 +160,9 @@ void main(void)
         }
     }
 #endif
-    __delay_us(10);
-    TranssmitOrRecieve = Recive;
+    
+    TranssmitOrRecieve_1 = Recive;
+    TranssmitOrRecieve_2 = Recive;
     RCONbits.IPEN = 1;
     INTCONbits.GIEH = 1;
     INTCONbits.GIEL = 1;
@@ -185,6 +181,8 @@ void main(void)
 #if !DEBUG
 
 #else
+        ModBusTxRxFunc(1);
+        ModBusTxRxFunc(2);
         static UINT8 i_automat_state = 0;
         automat_state[i_automat_state]();
         if (++i_automat_state == (sizeof (automat_state) / sizeof (automat_state[0])))
@@ -195,6 +193,34 @@ void main(void)
 #endif
 
     }
+}
+
+void Reset_Lock()
+{
+    while (!BUTTON)
+    {
+        static UINT8 cnt = 0;
+        if (++cnt >= 40)
+        {
+            service_mode = 1;
+            lock_signal = 0;
+            cnt = 0;
+            return;
+        }
+        CLRWDT();
+        __delay_ms(100);
+    }
+}
+
+void blinker_func()
+{
+    UINT8 delta_time_ms = global_timer_ms;
+    global_timer_ms -= delta_time_ms;
+    static blinker_t blinker_5Gz_1_2 = {0};
+    blinker_mac(blinker_5Gz_1_2, 100, 100);
+    static blinker_t blinker_1Gz_1_10 = {0};
+    blinker_mac(blinker_1Gz_1_10, 100, 900);
+    LED_POWER = (service_mode) ? blinker_5Gz_1_2.state : blinker_1Gz_1_10.state;
 }
 
 void act_sluice(UINT8 index_mb, UINT8 temp_Number_Rx_Byte)
@@ -227,98 +253,11 @@ void act_sluice(UINT8 index_mb, UINT8 temp_Number_Rx_Byte)
         }
         CalculTX9Dbit(0);
         Number_Tx_Byte[0] = 0;
-        TranssmitOrRecieve = Transsmit;
+        TranssmitOrRecieve_1 = Transsmit;
         //LED.led_Blue = 1;
         TX1IE = 1;
     }
 
-}
-
-void ModBusTxRxFunc2()
-{
-    //DEBUG_PIN = 1;
-    if (TranssmitOrRecieve_2 == Recive)
-    {
-        INTCONbits.GIEL = 0;
-        UINT8 temp_Number_Rx_Byte = Number_Rx_Byte[1];
-        UINT8 temp_Error_Recive_1_5 = Error_Recive_1_5[1];
-        UINT8 temp_mtO = modbus_timeOut[1].timer;
-        INTCONbits.GIEL = 1;
-        if (temp_Number_Rx_Byte && (temp_mtO > TimeOutFrame_3_5[1]))
-        {
-            //LED_RED = 0;
-#if 0 //вывод последних принятых запросов в ипром начиная с 80 адреса
-            static UINT16 index_eep = 80;
-            for (UINT8 index_byte = 0; index_byte < Number_Rx_Byte; index_byte++)
-            {
-                EEPR_WRITE_VAR(index_eep + index_byte, Rx_Tx_data[index_byte]);
-            }
-            EEPR_WRITE_VAR(index_eep + 13, temp_mtO);
-            EEPR_WRITE_VAR(index_eep + 14, Error_Recive_1_5);
-            EEPR_WRITE_VAR(index_eep + 15, Number_Rx_Byte);
-            index_eep += 16;
-            if (index_eep + 16 > 256)
-            {
-                index_eep = 80;
-            }
-#endif
-            if (temp_Number_Rx_Byte > 5 && !temp_Error_Recive_1_5)
-            {
-                UINT16 crcRx = crc_chk(Rx_Tx_data[1], temp_Number_Rx_Byte - 2);
-                if (crcRx == (Rx_Tx_data[1][temp_Number_Rx_Byte - 1] << 8 | Rx_Tx_data[1][temp_Number_Rx_Byte - 2]))
-                {
-                    if (Rx_Tx_data[1][0] == 247 && !lock_signal)
-                    {
-                        RCSTA2bits.CREN = 0;
-                        actCodeFunc(1);
-                    } else
-                    {
-                        RCSTA1bits.CREN = RCSTA2bits.CREN = 0;
-                        act_sluice(1, temp_Number_Rx_Byte);
-                    }
-                }
-            }
-            Number_Rx_Byte[1] = 0;
-            Error_Recive_1_5[1] = 0;
-        }
-    }
-    //DEBUG_PIN = 0;
-}
-
-void set_baud_rate2()
-{
-
-    for (UINT8 index = 0; index < sizeof (add_dev) / sizeof (add_dev[0]); index++)
-    {
-        add_dev[index] = add_dev_reg[index];
-    }
-    baud_rate[1] = baud_rate_reg[1];
-    parity[1] = parity_reg[1];
-    UINT32 Speed_devise_bit_sek = CALCUL_SPEED_DEV_BIT_S(baud_rate[1]);
-    UINT16 tempSPBRG = CALCUL_SPBRG(Speed_devise_bit_sek);
-    SPBRG2 = tempSPBRG;
-    SPBRGH2 = tempSPBRG >> 8;
-    TimeOutFrame_3_5[1] = CALCUL_T_3_5(Speed_devise_bit_sek);
-    TimeOutFrame_1_5[1] = CALCUL_T_1_5(Speed_devise_bit_sek);
-
-    TXSTA2bits.BRGH = 1;
-    BAUDCON2bits.BRG16 = 1;
-    RCSTA2bits.SPEN = 1;
-    TXSTA2bits.SYNC = 0;
-    RCSTA2bits.CREN = 1;
-    TXSTA2bits.TXEN = 1;
-    if (parity[1])
-    {
-        TXSTA2bits.TX9 = 1;
-        RCSTA2bits.RX9 = 1;
-    } else
-    {
-        TXSTA2bits.TX9 = 0;
-        RCSTA2bits.RX9 = 0;
-    }
-    TX2IP = 0;
-    RC2IP = 0;
-    RC2IE = 1;
 }
 
 void func_initialization()
@@ -361,8 +300,8 @@ void func_save_all()
         {
             index = 0;
             cfg_save = 0;
-            set_baud_rate();
-            set_baud_rate2();
+            set_baud_rate(1);
+            set_baud_rate(2);
         } else
             index++;
     }
@@ -395,117 +334,24 @@ UINT8 check_add(UINT8 receiv_byte)
             return 1;
         }
     }
+    if (receiv_byte >= add_dev_begin_1 && receiv_byte <= add_dev_end_1)
+    {
+        return 1;
+    } else if (receiv_byte >= add_dev_begin_2 && receiv_byte <= add_dev_end_2)
+    {
+        return 1;
+    } else if(receiv_byte >= add_dev_begin_3 && receiv_byte <= add_dev_end_3)
+    {
+        return 1;
+    }
     return 0;
 }
 
 void low_priority interrupt func_interrupt_L(void)
 {
     //DEBUG_PIN = 1;
-
-    if (TX1IE && TX1IF)
-    {
-        if (Number_Tx_Byte[0] < size_Tx_frame[0])
-        {
-            if (parity[0] == 1)
-                TXSTA1bits.TX9D = TX9Dbit[0][Number_Tx_Byte[0]];
-            else if (parity[0] == 2)
-                TXSTA1bits.TX9D = !TX9Dbit[0][Number_Tx_Byte[0]];
-            TXREG1 = Rx_Tx_data[0][Number_Tx_Byte[0]];
-            Number_Tx_Byte[0]++;
-            if (Number_Tx_Byte[0] == size_Tx_frame[0])
-            {
-                TX1IE = 0;
-                Switch_Transsmit_Recieve[0] = 1;
-            }
-        }
-    } else if (RC1IE && RC1IF)
-    {
-        //DEBUG_PIN = 1;
-        UINT8 receiv_byte = RCREG1;
-        if (Number_Rx_Byte[0])
-        {
-            if (modbus_timeOut[0].timer > TimeOutFrame_1_5[0])
-                Error_Recive_1_5[0] = 1;
-            if (Number_Rx_Byte[0] < sizeof (Rx_Tx_data[0]))
-            {
-                Rx_Tx_data[0][Number_Rx_Byte[0]] = receiv_byte;
-                Number_Rx_Byte[0]++;
-            }
-        } else
-        {
-            if ((modbus_timeOut[0].timer > TimeOutFrame_3_5[0]))
-            {
-                if (check_add(receiv_byte))
-                {
-                    //LED_RED = 1;
-                    Rx_Tx_data[0][0] = receiv_byte;
-                    Number_Rx_Byte[0] = 1;
-                }
-            }
-        }
-        modbus_timeOut[0].timer = 0;
-        if (RCSTA1bits.OERR)
-        {
-            Number_Rx_Byte[0] = 0;
-            Error_Recive_1_5[0] = 0;
-            RCSTA1bits.CREN = 0;
-            RCSTA1bits.CREN = 1;
-        }
-        //DEBUG_PIN = 0;
-    }
-
-    if (TX2IE && TX2IF)
-    {
-        if (Number_Tx_Byte[1] < size_Tx_frame[1])
-        {
-            if (parity[1] == 1)
-                TXSTA2bits.TX9D = TX9Dbit[1][Number_Tx_Byte[1]];
-            else if (parity[1] == 2)
-                TXSTA2bits.TX9D = !TX9Dbit[1][Number_Tx_Byte[1]];
-            TXREG2 = Rx_Tx_data[1][Number_Tx_Byte[1]];
-            Number_Tx_Byte[1]++;
-            if (Number_Tx_Byte[1] == size_Tx_frame[1])
-            {
-                TX2IE = 0;
-                Switch_Transsmit_Recieve[1] = 1;
-            }
-        }
-    } else if (RC2IE && RC2IF)
-    {
-        //DEBUG_PIN = 1;
-        UINT8 receiv_byte = RCREG2;
-        if (Number_Rx_Byte[1])
-        {
-            if (modbus_timeOut[1].timer > TimeOutFrame_1_5[1])
-                Error_Recive_1_5[1] = 1;
-            if (Number_Rx_Byte[1] < sizeof (Rx_Tx_data[1]))
-            {
-                Rx_Tx_data[1][Number_Rx_Byte[1]] = receiv_byte;
-                Number_Rx_Byte[1]++;
-            }
-        } else
-        {
-            if ((modbus_timeOut[1].timer > TimeOutFrame_3_5[1]))
-            {
-                if (check_add(receiv_byte))
-                {
-                    //LED_RED = 1;
-                    Rx_Tx_data[1][0] = receiv_byte;
-                    Number_Rx_Byte[1] = 1;
-                }
-            }
-        }
-        modbus_timeOut[0].timer = 0;
-        if (RCSTA2bits.OERR)
-        {
-            Number_Rx_Byte[0] = 0;
-            Error_Recive_1_5[0] = 0;
-            RCSTA2bits.CREN = 0;
-            RCSTA2bits.CREN = 1;
-        }
-        //DEBUG_PIN = 0;
-    }
-
+    UART_PORT_HUNDLER(1);
+    UART_PORT_HUNDLER(2);
     //DEBUG_PIN = 0;
 }
 
@@ -515,46 +361,15 @@ void high_priority interrupt func_interrupt_h(void)
 
     if (CCP4IF)
     {
-
-        if (Switch_Transsmit_Recieve[0] && TXSTA1bits.TRMT) //переключение приемопередатчика с передачи на прием
+        UART_TRANSSMITED_ENDED(1);
+        UART_TRANSSMITED_ENDED(2);
+        static UINT8 internal_timer_1ms = 0;
+        if (++internal_timer_1ms >= 1000 / PERIOD_INTERRUPT_MKS)
         {
-            TranssmitOrRecieve = Recive;
-            // LED.led_Blue = 0;
-            modbus_timeOut[0].timer = TimeOutFrame_3_5[0];
-            Switch_Transsmit_Recieve[0] = 0;
-            RCSTA1bits.CREN = RCSTA2bits.CREN = 1; //UART включение приемника
+            internal_timer_1ms = 0;
+            global_timer_ms++;
         }
-        if (Switch_Transsmit_Recieve[1] && TXSTA2bits.TRMT) //переключение приемопередатчика с передачи на прием
-        {
-            TranssmitOrRecieve_2 = Recive;
-            // LED.led_Blue = 0;
-            modbus_timeOut[1].timer = TimeOutFrame_3_5[1];
-            Switch_Transsmit_Recieve[1] = 0;
-            RCSTA1bits.CREN = RCSTA2bits.CREN = 1; //UART включение приемника
-        }
-
-
-        if (modbus_timeOut[0].timer != 0xFF)
-        {
-            static UINT8 internal_timer_time_Out = 0;
-            if (++internal_timer_time_Out >= TIME_OUT_FRAME_MKS / PERIOD_INTERRUPT_MKS)
-            {
-                internal_timer_time_Out = 0;
-                modbus_timeOut[0].timer++;
-            }
-        }
-        if (modbus_timeOut[1].timer != 0xFF)
-        {
-            static UINT8 internal_timer_time_Out = 0;
-            if (++internal_timer_time_Out >= TIME_OUT_FRAME_MKS / PERIOD_INTERRUPT_MKS)
-            {
-                internal_timer_time_Out = 0;
-                modbus_timeOut[1].timer++;
-            }
-        }
-
-
-        Timer_Interrupt_3++;
+        global_timer_ms++;
         CCP4IF = 0;
     }
     //DEBUG_PIN = 0;

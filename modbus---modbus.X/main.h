@@ -27,18 +27,10 @@
 //замены пинов
 #define DEBUG_PIN LATA4
 
-#define INPUT_1 PORTAbits.RA3
-#define INPUT_2 PORTCbits.RC0
-#define RESET_IN PORTBbits.RB0
-#define LOCK_BUTT PORTBbits.RB1
-#define PNP_NPN_SW_IN1 LATB6
-#define PNP_NPN_SW_IN2 LATA2
-#define PNP_NPN_SW_RES_IN LATB5
-#define PNP_NPN_SW_LOCK_BUTT LATB7
-#define RELAY_1 LATA0
-#define RELAY_2 LATA1
-#define FAZA PORTAbits.RA5
-
+#define LED_POWER TRISA2
+#define LED_1 LATA0
+#define LED_2 LATA1
+#define BUTTON RE3
 
 //работа с данными
 #define GET_BYTE(numb, data) (*(((UINT8*)&data) + numb))
@@ -64,6 +56,107 @@
 //адреса записи в ипром
 #define BEGIN_EEPR_ADD 32
 
+#define UART_PORT_HUNDLER(x)\
+do{\
+    if (TX##x##IE && TX##x##IF)\
+    {\
+        LED_##x = 1;\
+        if (Number_Tx_Byte[x-1] < size_Tx_frame[x-1])\
+        {\
+            if (parity[x-1] == 1)\
+                TXSTA##x##bits.TX9D = TX9Dbit[x-1][Number_Tx_Byte[x-1]];\
+            else if (parity[x-1] == 2)\
+                TXSTA##x##bits.TX9D = !TX9Dbit[x-1][Number_Tx_Byte[x-1]];\
+            TXREG##x = Rx_Tx_data[x-1][Number_Tx_Byte[x-1]];\
+            Number_Tx_Byte[x-1]++;\
+            if (Number_Tx_Byte[x-1] == size_Tx_frame[x-1])\
+            {\
+                TX##x##IE = 0;\
+                Switch_Transsmit_Recieve[x-1] = 1;\
+            }\
+        }\
+    } else if (RC##x##IE && RC##x##IF)\
+    {\
+        UINT8 receiv_byte = RCREG##x;\
+        if (Number_Rx_Byte[x-1])\
+        {\
+            if (modbus_timeOut[x-1].timer > TimeOutFrame_1_5[x-1])\
+                Error_Recive_1_5[x-1] = 1;\
+            if (Number_Rx_Byte[x-1] < sizeof (Rx_Tx_data[x-1]))\
+            {\
+                Rx_Tx_data[x-1][Number_Rx_Byte[x-1]] = receiv_byte;\
+                Number_Rx_Byte[x-1]++;\
+            }\
+        } else\
+        {\
+            if ((modbus_timeOut[x-1].timer > TimeOutFrame_3_5[x-1]))\
+            {\
+                if (check_add(receiv_byte))\
+                {\
+                    Rx_Tx_data[x-1][0] = receiv_byte;\
+                    Number_Rx_Byte[x-1] = 1;\
+                }\
+            }\
+        }\
+        modbus_timeOut[x-1].timer = 0;\
+        if (RCSTA##x##bits.OERR)\
+        {\
+            Number_Rx_Byte[x-1] = 0;\
+            Error_Recive_1_5[x-1] = 0;\
+            RCSTA##x##bits.CREN = 0;\
+            RCSTA##x##bits.CREN = 1;\
+        }\
+    }\
+}while(0)
+
+#define UART_TRANSSMITED_ENDED(x)\
+do{\
+        if (Switch_Transsmit_Recieve[x-1] && TXSTA##x##bits.TRMT)\
+        {\
+            TranssmitOrRecieve_##x = Recive;\
+            LED_##x = 0;\
+            modbus_timeOut[x-1].timer = TimeOutFrame_3_5[x-1];\
+            Switch_Transsmit_Recieve[x-1] = 0;\
+            RCSTA1bits.CREN = RCSTA2bits.CREN = 1;\
+        }\
+        if (modbus_timeOut[x-1].timer != 0xFF)\
+        {\
+            static UINT8 internal_timer_time_Out = 0;\
+            if (++internal_timer_time_Out >= TIME_OUT_FRAME_MKS / PERIOD_INTERRUPT_MKS)\
+            {\
+                internal_timer_time_Out = 0;\
+                modbus_timeOut[x-1].timer++;\
+            }\
+        }\
+        }while(0)
+
+
+#define blinker_mac(blinker, time_on, time_off) \
+do{\
+    if (blinker.state)\
+    {\
+        blinker.cnt += delta_time_ms;\
+        if (blinker.cnt >= time_on)\
+        {\
+            blinker.state = 0;\
+            blinker.cnt -= time_on;\
+            blinker.period = 1;\
+        }\
+    } else\
+    {\
+        blinker.cnt += delta_time_ms;\
+        if (blinker.cnt >= time_off)\
+        {\
+            blinker.state = 1;\
+            blinker.cnt -= time_off;\
+        }\
+    }}while(0)
+
+typedef struct {
+    UINT16 cnt;
+    UINT8 state : 1;
+    UINT8 period : 1;
+} blinker_t;
 
 typedef void (*automat_state_t)(void);
 
@@ -94,6 +187,13 @@ extern UINT8 parity_reg[2];
 extern UINT8 err_conf;
 extern UINT8 cfg_save;
 
+extern UINT8 add_dev_begin_1;
+extern UINT8 add_dev_end_1;
+extern UINT8 add_dev_begin_2;
+extern UINT8 add_dev_end_2;
+extern UINT8 add_dev_begin_3;
+extern UINT8 add_dev_end_3;
+
 extern UINT8 all_reset;
 extern UINT16 debug_var;
 
@@ -109,7 +209,9 @@ void func_reset_all();
 void func_save_all();
 void ModBusTxRxFunc2();
 void act_sluice(UINT8 index_mb, UINT8 temp_Number_Rx_Byte);
-void set_baud_rate2();
+void Reset_Lock();
+void blinker_func();
+UINT8 check_add(UINT8 receiv_byte);
 
 
 #include "Modbus.h"

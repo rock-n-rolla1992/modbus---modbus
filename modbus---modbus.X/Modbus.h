@@ -27,9 +27,9 @@
 //общая конфигурация
 #define MODE_OPERATION_DEV MODE_CNT_PULSE
 
-
+#define TranssmitOrRecieve(x) (TranssmitOrRecieve_##x)
 //замениы пинов
-#define TranssmitOrRecieve LATC1
+#define TranssmitOrRecieve_1 LATC1
 #define TranssmitOrRecieve_2 LATC1
 //режимы приемопередатчика
 #define Transsmit 1
@@ -44,10 +44,84 @@
 
 #define init_MB(mb_add, rw, eepr_save, min, def, max, var_add_) {mb_add, rw, eepr_save, min, def, max, sizeof(var_add_), &var_add_},
 
+
+#define set_baud_rate(x)\
+do\
+{\
+    for (UINT8 index_12 = 0; index_12 < sizeof (add_dev) / sizeof (add_dev[0]); index_12++)\
+    {\
+        add_dev[index_12] = add_dev_reg[index_12];\
+    }\
+    baud_rate[x-1] = baud_rate_reg[x-1];\
+    parity[x-1] = parity_reg[x-1];\
+    UINT32 Speed_devise_bit_sek = CALCUL_SPEED_DEV_BIT_S(baud_rate[x-1]);\
+    if (service_mode)\
+    Speed_devise_bit_sek = 19200;\
+    UINT16 tempSPBRG = CALCUL_SPBRG(Speed_devise_bit_sek);\
+    SPBRG##x = tempSPBRG;\
+    SPBRGH##x = tempSPBRG >> 8;\
+    TimeOutFrame_3_5[x-1] = CALCUL_T_3_5(Speed_devise_bit_sek);\
+    TimeOutFrame_1_5[x-1] = CALCUL_T_1_5(Speed_devise_bit_sek);\
+\
+    TXSTA##x##bits.BRGH = 1;\
+    BAUDCON##x##bits.BRG16 = 1;\
+    RCSTA##x##bits.SPEN = 1;\
+    TXSTA##x##bits.SYNC = 0;\
+    RCSTA##x##bits.CREN = 1;\
+    TXSTA##x##bits.TXEN = 1;\
+    if (parity[x-1] && !service_mode)\
+    {\
+        TXSTA##x##bits.TX9 = 1;\
+        RCSTA##x##bits.RX9 = 1;\
+    } else\
+    {\
+        TXSTA##x##bits.TX9 = 0;\
+        RCSTA##x##bits.RX9 = 0;\
+    }\
+    TX##x##IP = 0;\
+    RC##x##IP = 0;\
+    RC##x##IE = 1;\
+}while(0)
+
+#define ModBusTxRxFunc(index_mb)\
+do\
+{\
+if (TranssmitOrRecieve_##index_mb == Recive)\
+{\
+INTCONbits.GIEL = 0;\
+UINT8 temp_Number_Rx_Byte = Number_Rx_Byte[index_mb-1];\
+UINT8 temp_Error_Recive_1_5 = Error_Recive_1_5[index_mb-1];\
+UINT8 temp_mtO = modbus_timeOut[index_mb-1].timer;\
+INTCONbits.GIEL = 1;\
+if (temp_Number_Rx_Byte && (temp_mtO > TimeOutFrame_3_5[index_mb-1]))\
+{\
+if (temp_Number_Rx_Byte > 5 && !temp_Error_Recive_1_5)\
+{\
+UINT16 crcRx = crc_chk(Rx_Tx_data[index_mb-1], temp_Number_Rx_Byte - 2);\
+if (crcRx == (Rx_Tx_data[index_mb-1][temp_Number_Rx_Byte - 1] << 8 | Rx_Tx_data[index_mb-1][temp_Number_Rx_Byte - 2]))\
+{\
+if (Rx_Tx_data[index_mb-1][0] == 247 && !lock_signal)\
+{\
+RCSTA##index_mb##bits.CREN = 0;\
+\
+actCodeFunc(index_mb-1);\
+} else\
+{\
+RCSTA1bits.CREN = RCSTA2bits.CREN = 0;\
+act_sluice(index_mb-1, temp_Number_Rx_Byte);\
+}\
+}\
+}\
+Number_Rx_Byte[index_mb-1] = 0;\
+Error_Recive_1_5[index_mb-1] = 0;\
+}\
+}\
+}while(0)
+
 typedef struct {
     UINT16 mb_add;
-    UINT8 rw:1;
-    UINT8 eepr_save:1;
+    UINT8 rw : 1;
+    UINT8 eepr_save : 1;
     UINT16 min_val;
     UINT16 default_val;
     UINT16 max_val;
@@ -75,11 +149,9 @@ extern UINT8 Error_Recive_1_5[2];
 
 extern modbus_timeOut_t modbus_timeOut[2];
 extern const MB_Set_t MB_Set[];
-extern UINT8 MB_eepr_add[sizeof (MB_Set)/sizeof(MB_Set[0])];
+extern UINT8 MB_eepr_add[sizeof (MB_Set) / sizeof (MB_Set[0])];
 #endif
-void set_baud_rate();
 UINT8 error_ad(UINT16 add_reg_get_set, UINT8 Modif, UINT8 Number_reg, UINT16 * ad);
-void ModBusTxRxFunc();
 void errorLogical(UINT8 codeError, UINT8 index_mb);
 void actCF_write_some(UINT8 index_mb);
 void actCF_write(UINT8 index_mb);

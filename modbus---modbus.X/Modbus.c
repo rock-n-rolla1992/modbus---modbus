@@ -31,38 +31,45 @@ const MB_Set_t MB_Set[] = {
     init_MB(202, 1, 1, 0, 1, 2, parity_reg[1]) //контроль четности (0 - нет / 1 - четность / 2 - нечетность)
 
 
-    init_MB(300, 1, 1, 1, 255, 247, add_dev_reg[0]) //пропускаемый (1 -247)
-    init_MB(301, 1, 1, 1, 255, 247, add_dev_reg[1]) //пропускаемый (1 -247)
-    init_MB(302, 1, 1, 1, 255, 247, add_dev_reg[2]) //пропускаемый (1 -247)
-    init_MB(303, 1, 1, 1, 255, 247, add_dev_reg[3]) //пропускаемый (1 -247)
-    init_MB(304, 1, 1, 1, 255, 247, add_dev_reg[4]) //пропускаемый (1 -247)
-    init_MB(305, 1, 1, 1, 255, 247, add_dev_reg[5]) //пропускаемый (1 -247)
-    init_MB(306, 1, 1, 1, 255, 247, add_dev_reg[6]) //пропускаемый (1 -247)
-    init_MB(307, 1, 1, 1, 255, 247, add_dev_reg[7]) //пропускаемый (1 -247)
-    init_MB(308, 1, 1, 1, 255, 247, add_dev_reg[8]) //пропускаемый (1 -247)
-    init_MB(309, 1, 1, 1, 255, 247, add_dev_reg[9]) //пропускаемый (1 -247)
-    init_MB(310, 1, 1, 1, 255, 247, add_dev_reg[10]) //пропускаемый (1 -247)
-    init_MB(311, 1, 1, 1, 255, 247, add_dev_reg[11]) //пропускаемый (1 -247)
-    init_MB(312, 1, 1, 1, 255, 247, add_dev_reg[12]) //пропускаемый (1 -247)
-    init_MB(313, 1, 1, 1, 255, 247, add_dev_reg[13]) //пропускаемый (1 -247)
-    init_MB(314, 1, 1, 1, 255, 247, add_dev_reg[14]) //пропускаемый (1 -247)
-    init_MB(315, 1, 1, 1, 255, 247, add_dev_reg[15]) //пропускаемый (1 -247)
-    init_MB(316, 1, 1, 1, 255, 247, add_dev_reg[16]) //пропускаемый (1 -247)
-    init_MB(317, 1, 1, 1, 255, 247, add_dev_reg[17]) //пропускаемый (1 -247)
-    init_MB(318, 1, 1, 1, 255, 247, add_dev_reg[18]) //пропускаемый (1 -247)
-    init_MB(319, 1, 1, 1, 255, 247, add_dev_reg[19]) //пропускаемый (1 -247)
-    init_MB(320, 1, 1, 1, 255, 247, add_dev_reg[20]) //пропускаемый (1 -247)
-    init_MB(321, 1, 1, 1, 255, 247, add_dev_reg[21]) //пропускаемый (1 -247)
-    init_MB(322, 1, 1, 1, 255, 247, add_dev_reg[22]) //пропускаемый (1 -247)
-    init_MB(323, 1, 1, 1, 255, 247, add_dev_reg[23]) //пропускаемый (1 -247)
-    init_MB(324, 1, 1, 1, 255, 247, add_dev_reg[24]) //пропускаемый (1 -247)
-    init_MB(325, 1, 1, 1, 255, 247, add_dev_reg[25]) //пропускаемый (1 -247)
-    init_MB(326, 1, 1, 1, 255, 247, add_dev_reg[26]) //пропускаемый (1 -247)
-    init_MB(327, 1, 1, 1, 255, 247, add_dev_reg[27]) //пропускаемый (1 -247)
-    init_MB(328, 1, 1, 1, 255, 247, add_dev_reg[28]) //пропускаемый (1 -247)
-    init_MB(329, 1, 1, 1, 255, 247, add_dev_reg[29]) //пропускаемый (1 -247)
-    init_MB(330, 1, 1, 1, 255, 247, add_dev_reg[30]) //пропускаемый (1 -247)
-    init_MB(331, 1, 1, 1, 255, 247, add_dev_reg[31]) //пропускаемый (1 -247)
+    init_MB(300, 1, 1, 1, 255, 255, add_dev_reg[0]) //пропускаемый (1 -247)
+    init_MB(301, 1, 1, 1, 255, 255, add_dev_reg[1]) //пропускаемый (1 -247)
+    init_MB(302, 1, 1, 1, 255, 255, add_dev_reg[2]) //пропускаемый (1 -247)
+    init_MB(303, 1, 1, 1, 255, 255, add_dev_reg[3]) //пропускаемый (1 -247)
+    init_MB(304, 1, 1, 1, 255, 255, add_dev_reg[4]) //пропускаемый (1 -247)
+    init_MB(305, 1, 1, 1, 255, 255, add_dev_reg[5]) //пропускаемый (1 -247)
+    init_MB(306, 1, 1, 1, 255, 255, add_dev_reg[6]) //пропускаемый (1 -247)
+    init_MB(307, 1, 1, 1, 255, 255, add_dev_reg[7]) //пропускаемый (1 -247)
+    init_MB(308, 1, 1, 1, 255, 255, add_dev_reg[8]) //пропускаемый (1 -247)
+    init_MB(309, 1, 1, 1, 255, 255, add_dev_reg[9]) //пропускаемый (1 -247)
+    init_MB(310, 1, 1, 1, 255, 255, add_dev_reg[10]) //пропускаемый (1 -247)
+    init_MB(311, 1, 1, 1, 255, 255, add_dev_reg[11]) //пропускаемый (1 -247)
+    init_MB(312, 1, 1, 1, 255, 255, add_dev_reg[12]) //пропускаемый (1 -247)
+    init_MB(313, 1, 1, 1, 255, 255, add_dev_reg[13]) //пропускаемый (1 -247)
+    init_MB(314, 1, 1, 1, 255, 255, add_dev_reg[14]) //пропускаемый (1 -247)
+    init_MB(315, 1, 1, 1, 255, 255, add_dev_reg[15]) //пропускаемый (1 -247)
+    init_MB(316, 1, 1, 1, 255, 255, add_dev_reg[16]) //пропускаемый (1 -247)
+    init_MB(317, 1, 1, 1, 255, 255, add_dev_reg[17]) //пропускаемый (1 -247)
+    init_MB(318, 1, 1, 1, 255, 255, add_dev_reg[18]) //пропускаемый (1 -247)
+    init_MB(319, 1, 1, 1, 255, 255, add_dev_reg[19]) //пропускаемый (1 -247)
+    init_MB(320, 1, 1, 1, 255, 255, add_dev_reg[20]) //пропускаемый (1 -247)
+    init_MB(321, 1, 1, 1, 255, 255, add_dev_reg[21]) //пропускаемый (1 -247)
+    init_MB(322, 1, 1, 1, 255, 255, add_dev_reg[22]) //пропускаемый (1 -247)
+    init_MB(323, 1, 1, 1, 255, 255, add_dev_reg[23]) //пропускаемый (1 -247)
+    init_MB(324, 1, 1, 1, 255, 255, add_dev_reg[24]) //пропускаемый (1 -247)
+    init_MB(325, 1, 1, 1, 255, 255, add_dev_reg[25]) //пропускаемый (1 -247)
+    init_MB(326, 1, 1, 1, 255, 255, add_dev_reg[26]) //пропускаемый (1 -247)
+    init_MB(327, 1, 1, 1, 255, 255, add_dev_reg[27]) //пропускаемый (1 -247)
+    init_MB(328, 1, 1, 1, 255, 255, add_dev_reg[28]) //пропускаемый (1 -247)
+    init_MB(329, 1, 1, 1, 255, 255, add_dev_reg[29]) //пропускаемый (1 -247)
+    init_MB(330, 1, 1, 1, 255, 255, add_dev_reg[30]) //пропускаемый (1 -247)
+    init_MB(331, 1, 1, 1, 255, 255, add_dev_reg[31]) //пропускаемый (1 -247)
+
+    init_MB(400, 1, 1, 1, 255, 255, add_dev_begin_1) //пропускаемый (1 -247)
+    init_MB(401, 1, 1, 1, 255, 255, add_dev_end_1) //пропускаемый (1 -247)
+    init_MB(402, 1, 1, 1, 255, 255, add_dev_begin_2) //пропускаемый (1 -247)
+    init_MB(403, 1, 1, 1, 255, 255, add_dev_end_2) //пропускаемый (1 -247)
+    init_MB(404, 1, 1, 1, 255, 255, add_dev_begin_3) //пропускаемый (1 -247)
+    init_MB(405, 1, 1, 1, 255, 255, add_dev_end_3) //пропускаемый (1 -247)
 
     init_MB(65000, 1, 0, 0, 0, 1, all_reset)//3     //ошибка записи конфигурации
     init_MB(65002, 0, 0, 0, 0, 0xFFFF, debug_var)
@@ -71,37 +78,6 @@ const MB_Set_t MB_Set[] = {
     init_MB(0xFFF1, 0, 0, 0, (soft_ver_S0 << 8) | (soft_ver_S1 * 10 + soft_ver_S2), 0xFFFF, ver) //75  //ver
 };
 UINT8 MB_eepr_add[sizeof (MB_Set) / sizeof (MB_Set[0])] = {0};
-
-void set_baud_rate()
-{
-    baud_rate[0] = baud_rate_reg[0];
-    parity[0] = parity_reg[0];
-    UINT32 Speed_devise_bit_sek = CALCUL_SPEED_DEV_BIT_S(baud_rate[0]);
-    UINT16 tempSPBRG = CALCUL_SPBRG(Speed_devise_bit_sek);
-    SPBRG1 = tempSPBRG;
-    SPBRGH1 = tempSPBRG >> 8;
-    TimeOutFrame_3_5[0] = CALCUL_T_3_5(Speed_devise_bit_sek);
-    TimeOutFrame_1_5[0] = CALCUL_T_1_5(Speed_devise_bit_sek);
-
-    TXSTA1bits.BRGH = 1;
-    BAUDCON1bits.BRG16 = 1;
-    RCSTA1bits.SPEN = 1;
-    TXSTA1bits.SYNC = 0;
-    RCSTA1bits.CREN = 1;
-    TXSTA1bits.TXEN = 1;
-    if (parity[0])
-    {
-        TXSTA1bits.TX9 = 1;
-        RCSTA1bits.RX9 = 1;
-    } else
-    {
-        TXSTA1bits.TX9 = 0;
-        RCSTA1bits.RX9 = 0;
-    }
-    TX1IP = 0;
-    RC1IP = 0;
-    RC1IE = 1;
-}
 
 UINT8 error_ad(UINT16 add_reg_get_set, UINT8 Modif, UINT8 Number_reg, UINT16 * ad)
 {
@@ -123,57 +99,6 @@ UINT8 error_ad(UINT16 add_reg_get_set, UINT8 Modif, UINT8 Number_reg, UINT16 * a
         add_reg_get_set++;
     }
     return 0;
-}
-
-void ModBusTxRxFunc()
-{
-    //DEBUG_PIN = 1;
-    if (TranssmitOrRecieve == Recive)
-    {
-        INTCONbits.GIEL = 0;
-        UINT8 temp_Number_Rx_Byte = Number_Rx_Byte[0];
-        UINT8 temp_Error_Recive_1_5 = Error_Recive_1_5[0];
-        UINT8 temp_mtO = modbus_timeOut[0].timer;
-        INTCONbits.GIEL = 1;
-        if (temp_Number_Rx_Byte && (temp_mtO > TimeOutFrame_3_5[0]))
-        {
-            //LED_RED = 0;
-#if 0 //вывод последних принятых запросов в ипром начиная с 80 адреса
-            static UINT16 index_eep = 80;
-            for (UINT8 index_byte = 0; index_byte < Number_Rx_Byte; index_byte++)
-            {
-                EEPR_WRITE_VAR(index_eep + index_byte, Rx_Tx_data[index_byte]);
-            }
-            EEPR_WRITE_VAR(index_eep + 13, temp_mtO);
-            EEPR_WRITE_VAR(index_eep + 14, Error_Recive_1_5);
-            EEPR_WRITE_VAR(index_eep + 15, Number_Rx_Byte);
-            index_eep += 16;
-            if (index_eep + 16 > 256)
-            {
-                index_eep = 80;
-            }
-#endif
-            if (temp_Number_Rx_Byte > 5 && !temp_Error_Recive_1_5)
-            {
-                UINT16 crcRx = crc_chk(Rx_Tx_data[0], temp_Number_Rx_Byte - 2);
-                if (crcRx == (Rx_Tx_data[0][temp_Number_Rx_Byte - 1] << 8 | Rx_Tx_data[0][temp_Number_Rx_Byte - 2]))
-                {
-                    if (Rx_Tx_data[0][0] == 247 && !lock_signal)
-                    {
-                        RCSTA1bits.CREN = 0;
-                        actCodeFunc(0);
-                    } else
-                    {
-                        RCSTA1bits.CREN = RCSTA2bits.CREN = 0;
-                        act_sluice(0, temp_Number_Rx_Byte);
-                    }
-                }
-            }
-            Number_Rx_Byte[0] = 0;
-            Error_Recive_1_5[0] = 0;
-        }
-    }
-    //DEBUG_PIN = 0;
 }
 
 void errorLogical(UINT8 codeError, UINT8 index_mb)
@@ -337,7 +262,7 @@ void actCodeFunc(UINT8 index_mb)
     if (index_mb == 0)
     {
         CalculTX9Dbit(index_mb);
-        TranssmitOrRecieve = Transsmit;
+        TranssmitOrRecieve_1 = Transsmit;
         //LED.led_Blue = 1;
         TX1IE = 1;
     } else if (index_mb == 1)

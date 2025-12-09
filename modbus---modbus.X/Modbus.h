@@ -31,6 +31,9 @@
 //замениы пинов
 #define TranssmitOrRecieve_1 LATC1
 #define TranssmitOrRecieve_2 LATC1
+
+//#define TranssmitOrRecieve_1 LATC5
+//#define TranssmitOrRecieve_2 LATB5
 //режимы приемопередатчика
 #define Transsmit 1
 #define Recive 0
@@ -48,12 +51,6 @@
 #define set_baud_rate(x)\
 do\
 {\
-    for (UINT8 index_12 = 0; index_12 < sizeof (add_dev) / sizeof (add_dev[0]); index_12++)\
-    {\
-        add_dev[index_12] = add_dev_reg[index_12];\
-    }\
-    baud_rate[x-1] = baud_rate_reg[x-1];\
-    parity[x-1] = parity_reg[x-1];\
     UINT32 Speed_devise_bit_sek = CALCUL_SPEED_DEV_BIT_S(baud_rate[x-1]);\
     if (service_mode)\
     Speed_devise_bit_sek = 19200;\
@@ -100,7 +97,7 @@ if (temp_Number_Rx_Byte > 5 && !temp_Error_Recive_1_5)\
 UINT16 crcRx = crc_chk(Rx_Tx_data[index_mb-1], temp_Number_Rx_Byte - 2);\
 if (crcRx == (Rx_Tx_data[index_mb-1][temp_Number_Rx_Byte - 1] << 8 | Rx_Tx_data[index_mb-1][temp_Number_Rx_Byte - 2]))\
 {\
-if (Rx_Tx_data[index_mb-1][0] == 247 && !lock_signal)\
+if (Rx_Tx_data[index_mb-1][0] == own_address && !lock_signal)\
 {\
 RCSTA##index_mb##bits.CREN = 0;\
 \

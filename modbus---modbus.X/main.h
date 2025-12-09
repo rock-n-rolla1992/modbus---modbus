@@ -176,12 +176,10 @@ typedef struct {
 
 
 #ifndef MAIN_C_DATA
-extern UINT8 lock_signal;
 
+extern UINT8 lock_signal_reg;
+extern UINT8 own_address_reg;
 extern UINT8 add_dev[32];
-extern UINT8 baud_rate[2];
-extern UINT8 parity[2];
-extern UINT8 add_dev_reg[32];
 extern UINT8 baud_rate_reg[2];
 extern UINT8 parity_reg[2];
 extern UINT8 err_conf;
@@ -204,6 +202,7 @@ extern UINT16 ver;
 
 #endif
 
+void func_get_val_reg();
 void func_initialization();
 void func_reset_all();
 void func_save_all();

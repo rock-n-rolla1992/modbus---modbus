@@ -66,18 +66,20 @@
 #pragma config EBTRB = OFF      // Boot Block Table Read Protection bit (Boot Block (000000-0007FFh) not protected from table reads executed in other blocks)
 
 UINT8 service_mode = 0;
-UINT8 lock_signal = 0;
 UINT8 global_timer_ms = 0;
-
-
 automat_state_t automat_state[] = {func_save_all, blinker_func};
-
 UINT8 Switch_Transsmit_Recieve[2] = 0;
 
-UINT8 add_dev[32];
+//переменные модбаса применяемые по команде 
+UINT8 lock_signal;
+UINT8 own_address;
 UINT8 baud_rate[2];
 UINT8 parity[2];
-UINT8 add_dev_reg[32];
+
+//модбас переменные
+UINT8 lock_signal_reg;
+UINT8 own_address_reg;
+UINT8 add_dev[32];
 UINT8 baud_rate_reg[2];
 UINT8 parity_reg[2];
 UINT8 err_conf;
@@ -118,7 +120,8 @@ void main(void)
     TRISB6 = OUT;
     TRISA0 = OUT;
     TRISA1 = OUT;
-    //TRISA2 = OUT;
+    TRISC1 = OUT;
+    TRISA4 = OUT;
 
     INTCON2bits.nRBPU = 0;
     WPUE3 = 1;
@@ -146,6 +149,7 @@ void main(void)
         func_reset_all();
         eepromWrite(BEGIN_EEPR_ADD, 0);
     }
+    func_get_val_reg();
     set_baud_rate(1);
     set_baud_rate(2);
 
@@ -160,7 +164,7 @@ void main(void)
         }
     }
 #endif
-    
+
     TranssmitOrRecieve_1 = Recive;
     TranssmitOrRecieve_2 = Recive;
     RCONbits.IPEN = 1;
@@ -195,6 +199,16 @@ void main(void)
     }
 }
 
+void func_get_val_reg()
+{
+    own_address = own_address_reg;
+    lock_signal = lock_signal_reg;
+    baud_rate[0] = baud_rate_reg[0];
+    parity[0] = parity_reg[0];
+    baud_rate[1] = baud_rate_reg[1];
+    parity[1] = parity_reg[1];
+}
+
 void Reset_Lock()
 {
     while (!BUTTON)
@@ -203,7 +217,7 @@ void Reset_Lock()
         if (++cnt >= 40)
         {
             service_mode = 1;
-            lock_signal = 0;
+            lock_signal_reg = 0;
             cnt = 0;
             return;
         }
@@ -300,6 +314,7 @@ void func_save_all()
         {
             index = 0;
             cfg_save = 0;
+            func_get_val_reg();
             set_baud_rate(1);
             set_baud_rate(2);
         } else
@@ -340,19 +355,20 @@ UINT8 check_add(UINT8 receiv_byte)
     } else if (receiv_byte >= add_dev_begin_2 && receiv_byte <= add_dev_end_2)
     {
         return 1;
-    } else if(receiv_byte >= add_dev_begin_3 && receiv_byte <= add_dev_end_3)
+    } else if (receiv_byte >= add_dev_begin_3 && receiv_byte <= add_dev_end_3)
     {
         return 1;
-    }
+    } else if (receiv_byte == own_address)
+        return 1;
     return 0;
 }
 
 void low_priority interrupt func_interrupt_L(void)
 {
-    //DEBUG_PIN = 1;
+    DEBUG_PIN = 1;
     UART_PORT_HUNDLER(1);
     UART_PORT_HUNDLER(2);
-    //DEBUG_PIN = 0;
+    DEBUG_PIN = 0;
 }
 
 void high_priority interrupt func_interrupt_h(void)

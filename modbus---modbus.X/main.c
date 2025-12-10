@@ -100,7 +100,7 @@ UINT16 ver;
 
 
 
-__EEPROM_DATA("m", "b", " ", "t", "o", " ", "m", "b");
+__EEPROM_DATA("M", "S", "-", "1", "5", " ", " ", " ");
 #if DEBUG
 __EEPROM_DATA("D", "E", "B", "U", "G", "v", "e", "r");
 #else
@@ -201,7 +201,8 @@ void main(void)
 
 void func_get_val_reg()
 {
-    own_address = own_address_reg;
+    
+    own_address = (service_mode)?247:own_address_reg;
     lock_signal = lock_signal_reg;
     baud_rate[0] = baud_rate_reg[0];
     parity[0] = parity_reg[0];
@@ -217,7 +218,7 @@ void Reset_Lock()
         if (++cnt >= 40)
         {
             service_mode = 1;
-            lock_signal_reg = 0;
+            //lock_signal_reg = 0;
             cnt = 0;
             return;
         }
@@ -314,6 +315,7 @@ void func_save_all()
         {
             index = 0;
             cfg_save = 0;
+            service_mode = 0;
             func_get_val_reg();
             set_baud_rate(1);
             set_baud_rate(2);

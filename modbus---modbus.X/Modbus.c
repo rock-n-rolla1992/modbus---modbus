@@ -273,7 +273,6 @@ void actCodeFunc(UINT8 index_mb)
         //LED.led_Blue = 1;
         TX2IE = 1;
     }
-
 }
 
 UINT16 crc_chk(UINT8* byte, UINT8 length)

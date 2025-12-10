@@ -97,7 +97,7 @@ if (temp_Number_Rx_Byte > 5 && !temp_Error_Recive_1_5)\
 UINT16 crcRx = crc_chk(Rx_Tx_data[index_mb-1], temp_Number_Rx_Byte - 2);\
 if (crcRx == (Rx_Tx_data[index_mb-1][temp_Number_Rx_Byte - 1] << 8 | Rx_Tx_data[index_mb-1][temp_Number_Rx_Byte - 2]))\
 {\
-if (Rx_Tx_data[index_mb-1][0] == own_address && !lock_signal)\
+if (Rx_Tx_data[index_mb-1][0] == own_address && (!lock_signal || service_mode))\
 {\
 RCSTA##index_mb##bits.CREN = 0;\
 \

@@ -11,32 +11,20 @@
 #define RX_BUF_SIZE 74
 //#define MB_MEMORY_SIZE 80
 
-//коды режимов
-#define MODE_CNT_PULSE 0
-#define MODE_TACHO 1
+#define PARITY_DEF_VAL 1
+#define OWN_ADDR_DEF_VAL 247
+#define BOUD_DEF_VAL 2 
 
-#define MODE_SUMM_1_AND_2 1
-#define MODE_SUMM_1_DIRECT_2 2
-#define MODE_REVERSIBLE_CNT 3
-#define MODE_SUMM_1_DIFF_2 4
-
-#define MODE_REVERSIBLE_TACHO 0
-#define MODE_2_TACHO 1
-
-//имена регистров
-//общая конфигурация
-#define MODE_OPERATION_DEV MODE_CNT_PULSE
-
-#define TranssmitOrRecieve(x) (TranssmitOrRecieve_##x)
+//#define TX_OR_RX_(x) (TX_OR_RX_##x)
 //замениы пинов
-#define TranssmitOrRecieve_1 LATC1
-#define TranssmitOrRecieve_2 LATC1
+#define TX_OR_RX_1 LATC1
+#define TX_OR_RX_2 LATC1
 
-//#define TranssmitOrRecieve_1 LATC5
-//#define TranssmitOrRecieve_2 LATB5
+//#define TX_OR_RX_1 LATC5
+//#define TX_OR_RX_2 LATB5
 //режимы приемопередатчика
-#define Transsmit 1
-#define Recive 0
+#define TRANSSMIT 1
+#define RECIVE 0
 
 //инициализация скорости передачи 
 #define CALCUL_SPEED_DEV_BIT_S(x) (x == 0?9600:x== 1? 14400: x==2?19200:x==3?28800:x== 4?38400:x== 5?57600:x== 6?76800:115200)
@@ -48,12 +36,10 @@
 #define init_MB(mb_add, rw, eepr_save, min, def, max, var_add_) {mb_add, rw, eepr_save, min, def, max, sizeof(var_add_), &var_add_},
 
 
-#define set_baud_rate(x)\
+#define SET_BAUDRATE(x)\
 do\
 {\
     UINT32 Speed_devise_bit_sek = CALCUL_SPEED_DEV_BIT_S(baud_rate[x-1]);\
-    if (service_mode)\
-    Speed_devise_bit_sek = 19200;\
     UINT16 tempSPBRG = CALCUL_SPBRG(Speed_devise_bit_sek);\
     SPBRG##x = tempSPBRG;\
     SPBRGH##x = tempSPBRG >> 8;\
@@ -66,7 +52,7 @@ do\
     TXSTA##x##bits.SYNC = 0;\
     RCSTA##x##bits.CREN = 1;\
     TXSTA##x##bits.TXEN = 1;\
-    if (parity[x-1] && !service_mode)\
+    if (parity[x-1])\
     {\
         TXSTA##x##bits.TX9 = 1;\
         RCSTA##x##bits.RX9 = 1;\
@@ -80,10 +66,10 @@ do\
     RC##x##IE = 1;\
 }while(0)
 
-#define ModBusTxRxFunc(index_mb)\
+#define MODBUS_TX_RX(index_mb)\
 do\
 {\
-if (TranssmitOrRecieve_##index_mb == Recive)\
+if (TX_OR_RX_##index_mb == RECIVE)\
 {\
 INTCONbits.GIEL = 0;\
 UINT8 temp_Number_Rx_Byte = Number_Rx_Byte[index_mb-1];\
@@ -97,7 +83,7 @@ if (temp_Number_Rx_Byte > 5 && !temp_Error_Recive_1_5)\
 UINT16 crcRx = crc_chk(Rx_Tx_data[index_mb-1], temp_Number_Rx_Byte - 2);\
 if (crcRx == (Rx_Tx_data[index_mb-1][temp_Number_Rx_Byte - 1] << 8 | Rx_Tx_data[index_mb-1][temp_Number_Rx_Byte - 2]))\
 {\
-if (Rx_Tx_data[index_mb-1][0] == own_address && (!lock_signal || service_mode))\
+if (Rx_Tx_data[index_mb-1][0] == own_address && !lock_signal)\
 {\
 RCSTA##index_mb##bits.CREN = 0;\
 \

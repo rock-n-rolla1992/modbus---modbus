@@ -21,15 +21,15 @@ const MB_Set_t MB_Set[] = {
     //общая конфигурация
     init_MB(0, 1, 1, 0, 0, 1, lock_signal_reg) //блокировка управления по модбасу
 
-    init_MB(100, 1, 1, 1, 247, 247, own_address_reg) //собственный адрес
-    init_MB(101, 1, 1, 0, 2, 7, baud_rate_reg[0]) //бодрейт (0 - 9600/1 -14400/2 - 19200/3 - 28800/4 - 38400/5 - 57600/6-76800/7-115200)
-    init_MB(102, 1, 1, 0, 1, 2, parity_reg[0]) //контроль четности (0 - нет / 1 - четность / 2 - нечетность)
+    init_MB(100, 1, 1, 1, OWN_ADDR_DEF_VAL, 247, own_address_reg) //собственный адрес
+    init_MB(101, 1, 1, 0, BOUD_DEF_VAL, 7, baud_rate_reg[0]) //бодрейт (0 - 9600/1 -14400/2 - 19200/3 - 28800/4 - 38400/5 - 57600/6-76800/7-115200)
+    init_MB(102, 1, 1, 0, PARITY_DEF_VAL, 2, parity_reg[0]) //контроль четности (0 - нет / 1 - четность / 2 - нечетность)
 
     init_MB(106, 1, 0, 0, 0, 0xFFFF, err_conf) //ошибка записи конфигурации
     init_MB(107, 1, 0, 0, 0, 1, cfg_save) //сохранение конфигурации
 
-    init_MB(201, 1, 1, 0, 2, 7, baud_rate_reg[1]) //бодрейт (0 - 9600/1 -14400/2 - 19200/3 - 28800/4 - 38400/5 - 57600/6-76800/7-115200)
-    init_MB(202, 1, 1, 0, 1, 2, parity_reg[1]) //контроль четности (0 - нет / 1 - четность / 2 - нечетность)
+    init_MB(201, 1, 1, 0, BOUD_DEF_VAL, 7, baud_rate_reg[1]) //бодрейт (0 - 9600/1 -14400/2 - 19200/3 - 28800/4 - 38400/5 - 57600/6-76800/7-115200)
+    init_MB(202, 1, 1, 0, PARITY_DEF_VAL, 2, parity_reg[1]) //контроль четности (0 - нет / 1 - четность / 2 - нечетность)
 
 
     init_MB(300, 1, 1, 1, 255, 255, add_dev[0]) //пропускаемый (1 -247)
@@ -76,7 +76,7 @@ const MB_Set_t MB_Set[] = {
     init_MB(65002, 0, 0, 0, 0, 0xFFFF, debug_var)
 
     init_MB(0xFFF0, 0, 0, 0, 0x0600, 0xFFFF, id)//74               //id
-    init_MB(0xFFF1, 0, 0, 0, (soft_ver_S0 << 8) | (soft_ver_S1 * 10 + soft_ver_S2), 0xFFFF, ver) //75  //ver
+    init_MB(0xFFF1, 0, 0, 0, (SOFT_VER_S0 << 8) | (SOFT_VER_S1 * 10 + SOFT_VER_S2), 0xFFFF, ver) //75  //ver
 };
 UINT8 MB_eepr_add[sizeof (MB_Set) / sizeof (MB_Set[0])] = {0};
 
@@ -263,13 +263,13 @@ void actCodeFunc(UINT8 index_mb)
     if (index_mb == 0)
     {
         CalculTX9Dbit(index_mb);
-        TranssmitOrRecieve_1 = Transsmit;
+        TX_OR_RX_1 = TRANSSMIT;
         //LED.led_Blue = 1;
         TX1IE = 1;
     } else if (index_mb == 1)
     {
         CalculTX9Dbit(index_mb);
-        TranssmitOrRecieve_2 = Transsmit;
+        TX_OR_RX_2 = TRANSSMIT;
         //LED.led_Blue = 1;
         TX2IE = 1;
     }

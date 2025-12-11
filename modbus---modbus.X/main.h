@@ -7,9 +7,9 @@
 #include "st_func_peripheral.h"
 
 //версия софта
-#define soft_ver_S0 0
-#define soft_ver_S1 0
-#define soft_ver_S2 1
+#define SOFT_VER_S0 0
+#define SOFT_VER_S1 0
+#define SOFT_VER_S2 1
 
 #define DEBUG 1
 
@@ -78,9 +78,11 @@ do{\
     } else if (RC##x##IE && RC##x##IF)\
     {\
         UINT8 receiv_byte = RCREG##x;\
+        UINT8 time_receiv_byte = modbus_timeOut[x-1].timer;\
+        modbus_timeOut[x-1].timer -= time_receiv_byte;\
         if (Number_Rx_Byte[x-1])\
         {\
-            if (modbus_timeOut[x-1].timer > TimeOutFrame_1_5[x-1])\
+            if (time_receiv_byte > TimeOutFrame_1_5[x-1])\
                 Error_Recive_1_5[x-1] = 1;\
             if (Number_Rx_Byte[x-1] < sizeof (Rx_Tx_data[x-1]))\
             {\
@@ -89,7 +91,7 @@ do{\
             }\
         } else\
         {\
-            if ((modbus_timeOut[x-1].timer > TimeOutFrame_3_5[x-1]))\
+            if ((time_receiv_byte > TimeOutFrame_3_5[x-1]))\
             {\
                 if (check_add(receiv_byte))\
                 {\
@@ -98,7 +100,6 @@ do{\
                 }\
             }\
         }\
-        modbus_timeOut[x-1].timer = 0;\
         if (RCSTA##x##bits.OERR)\
         {\
             Number_Rx_Byte[x-1] = 0;\
@@ -113,7 +114,7 @@ do{\
 do{\
         if (Switch_Transsmit_Recieve[x-1] && TXSTA##x##bits.TRMT)\
         {\
-            TranssmitOrRecieve_##x = Recive;\
+            TX_OR_RX_##x = RECIVE;\
             LED_##x = 0;\
             modbus_timeOut[x-1].timer = TimeOutFrame_3_5[x-1];\
             Switch_Transsmit_Recieve[x-1] = 0;\
@@ -131,7 +132,7 @@ do{\
         }while(0)
 
 
-#define blinker_mac(blinker, time_on, time_off) \
+#define BLINKER_MAC(blinker, time_on, time_off) \
 do{\
     if (blinker.state)\
     {\

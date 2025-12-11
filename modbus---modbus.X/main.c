@@ -104,7 +104,7 @@ __EEPROM_DATA("M", "S", "-", "1", "5", " ", " ", " ");
 #if DEBUG
 __EEPROM_DATA("D", "E", "B", "U", "G", "v", "e", "r");
 #else
-__EEPROM_DATA("V", "e", "r", " ", soft_ver_S0 + 48, ".", soft_ver_S1 + 48, soft_ver_S2 + 48);
+__EEPROM_DATA("V", "e", "r", " ", SOFT_VER_S0 + 48, ".", SOFT_VER_S1 + 48, SOFT_VER_S2 + 48);
 #endif
 
 void main(void)
@@ -150,8 +150,8 @@ void main(void)
         eepromWrite(BEGIN_EEPR_ADD, 0);
     }
     func_get_val_reg();
-    set_baud_rate(1);
-    set_baud_rate(2);
+    SET_BAUDRATE(1);
+    SET_BAUDRATE(2);
 
 
 #if 0
@@ -165,8 +165,8 @@ void main(void)
     }
 #endif
 
-    TranssmitOrRecieve_1 = Recive;
-    TranssmitOrRecieve_2 = Recive;
+    TX_OR_RX_1 = RECIVE;
+    TX_OR_RX_2 = RECIVE;
     RCONbits.IPEN = 1;
     INTCONbits.GIEH = 1;
     INTCONbits.GIEL = 1;
@@ -185,8 +185,8 @@ void main(void)
 #if !DEBUG
 
 #else
-        ModBusTxRxFunc(1);
-        ModBusTxRxFunc(2);
+        MODBUS_TX_RX(1);
+        MODBUS_TX_RX(2);
         static UINT8 i_automat_state = 0;
         automat_state[i_automat_state]();
         if (++i_automat_state == (sizeof (automat_state) / sizeof (automat_state[0])))
@@ -201,13 +201,12 @@ void main(void)
 
 void func_get_val_reg()
 {
-    
-    own_address = (service_mode)?247:own_address_reg;
-    lock_signal = lock_signal_reg;
-    baud_rate[0] = baud_rate_reg[0];
-    parity[0] = parity_reg[0];
-    baud_rate[1] = baud_rate_reg[1];
-    parity[1] = parity_reg[1];
+    own_address = (service_mode)?OWN_ADDR_DEF_VAL:own_address_reg;
+    lock_signal = (service_mode)?0:lock_signal_reg;
+    baud_rate[0] = (service_mode)?BOUD_DEF_VAL:baud_rate_reg[0];
+    parity[0] = (service_mode)?PARITY_DEF_VAL:parity_reg[0];
+    baud_rate[1] = (service_mode)?BOUD_DEF_VAL:baud_rate_reg[1];
+    parity[1] = (service_mode)?PARITY_DEF_VAL:parity_reg[1];
 }
 
 void Reset_Lock()
@@ -232,9 +231,9 @@ void blinker_func()
     UINT8 delta_time_ms = global_timer_ms;
     global_timer_ms -= delta_time_ms;
     static blinker_t blinker_5Gz_1_2 = {0};
-    blinker_mac(blinker_5Gz_1_2, 100, 100);
+    BLINKER_MAC(blinker_5Gz_1_2, 100, 100);
     static blinker_t blinker_1Gz_1_10 = {0};
-    blinker_mac(blinker_1Gz_1_10, 100, 900);
+    BLINKER_MAC(blinker_1Gz_1_10, 100, 900);
     LED_POWER = (service_mode) ? blinker_5Gz_1_2.state : blinker_1Gz_1_10.state;
 }
 
@@ -256,7 +255,7 @@ void act_sluice(UINT8 index_mb, UINT8 temp_Number_Rx_Byte)
         }
         CalculTX9Dbit(1);
         Number_Tx_Byte[1] = 0;
-        TranssmitOrRecieve_2 = Transsmit;
+        TX_OR_RX_2 = TRANSSMIT;
         //LED.led_Blue = 1;
         TX2IE = 1;
     } else if (index_mb == 1)
@@ -268,7 +267,7 @@ void act_sluice(UINT8 index_mb, UINT8 temp_Number_Rx_Byte)
         }
         CalculTX9Dbit(0);
         Number_Tx_Byte[0] = 0;
-        TranssmitOrRecieve_1 = Transsmit;
+        TX_OR_RX_1 = TRANSSMIT;
         //LED.led_Blue = 1;
         TX1IE = 1;
     }
@@ -317,8 +316,8 @@ void func_save_all()
             cfg_save = 0;
             service_mode = 0;
             func_get_val_reg();
-            set_baud_rate(1);
-            set_baud_rate(2);
+            SET_BAUDRATE(1);
+            SET_BAUDRATE(2);
         } else
             index++;
     }

@@ -1,6 +1,16 @@
 
-
+//PIC18F25K22
 /*
+ * Шлюз имеет собственный, настраиваемый адрес, по которому доступен ModBus с параметрами шлюза. Карта регистров в Modbus.c
+ * Модбас доступен с любой стороны, согласно параметрам соответствующего порта.
+ * Модбас можно заблокировать специальным регистром.
+ * При запуске удерживание кнопки 4с запускает сервисный режим, где оба входа стартуют с дефолтными параметрами (19200, 247, Even, и отсутствие блокировки Модбаса), при этом сами параметры не меняются.
+ * После конфига необходимо записать команду "сохранить и применить", которая сохраняет все параметры в ипром и применяет параметры порта и состояние блокировки.
+ * В остальном шлюз работает как зеркало, но пропускает только те адреса, которые заданы. Для корректной работы необходимо задать только те адреса, что находятся в подсети на другой стороне шлюза.
+ * Индикация в основном режиме - зеленый 1Гц, скважность 10. 
+ * Индикация в сервисном режиме - зеленый 5Гц, скважность 2.
+ * Индикация в режиме где контроллер сдох - зеленый светится.
+ * 
  */
 #define MAIN_C_DATA
 #include "main.h"
@@ -65,10 +75,12 @@
 // CONFIG7H
 #pragma config EBTRB = OFF      // Boot Block Table Read Protection bit (Boot Block (000000-0007FFh) not protected from table reads executed in other blocks)
 
+UINT8 led_1_state = 0;
+UINT8 led_2_state = 0;
 UINT8 service_mode = 0;
 UINT8 global_timer_ms = 0;
 automat_state_t automat_state[] = {func_save_all, blinker_func};
-UINT8 Switch_Transsmit_Recieve[2] = 0;
+UINT8 Switch_Transsmit_Recieve[2] = {0};
 
 //переменные модбаса применяемые по команде 
 UINT8 lock_signal;
@@ -122,6 +134,10 @@ void main(void)
     TRISA1 = OUT;
     TRISC1 = OUT;
     TRISA4 = OUT;
+
+    LATA = 0;
+    LATB = 0;
+    LATC = 0;
 
     INTCON2bits.nRBPU = 0;
     WPUE3 = 1;
@@ -201,12 +217,12 @@ void main(void)
 
 void func_get_val_reg()
 {
-    own_address = (service_mode)?OWN_ADDR_DEF_VAL:own_address_reg;
-    lock_signal = (service_mode)?0:lock_signal_reg;
-    baud_rate[0] = (service_mode)?BOUD_DEF_VAL:baud_rate_reg[0];
-    parity[0] = (service_mode)?PARITY_DEF_VAL:parity_reg[0];
-    baud_rate[1] = (service_mode)?BOUD_DEF_VAL:baud_rate_reg[1];
-    parity[1] = (service_mode)?PARITY_DEF_VAL:parity_reg[1];
+    own_address = (service_mode) ? OWN_ADDR_DEF_VAL : own_address_reg;
+    lock_signal = (service_mode) ? 0 : lock_signal_reg;
+    baud_rate[0] = (service_mode) ? BOUD_DEF_VAL : baud_rate_reg[0];
+    parity[0] = (service_mode) ? PARITY_DEF_VAL : parity_reg[0];
+    baud_rate[1] = (service_mode) ? BOUD_DEF_VAL : baud_rate_reg[1];
+    parity[1] = (service_mode) ? PARITY_DEF_VAL : parity_reg[1];
 }
 
 void Reset_Lock()
@@ -231,9 +247,11 @@ void blinker_func()
     UINT8 delta_time_ms = global_timer_ms;
     global_timer_ms -= delta_time_ms;
     static blinker_t blinker_5Gz_1_2 = {0};
-    BLINKER_MAC(blinker_5Gz_1_2, 100, 100);
+    BLINKER_MAC(blinker_5Gz_1_2, 100, 100, delta_time_ms);
     static blinker_t blinker_1Gz_1_10 = {0};
-    BLINKER_MAC(blinker_1Gz_1_10, 100, 900);
+    BLINKER_MAC(blinker_1Gz_1_10, 100, 900, delta_time_ms);
+
+    //blinker_1Gz_1_10.state = 0;
     LED_POWER = (service_mode) ? blinker_5Gz_1_2.state : blinker_1Gz_1_10.state;
 }
 
@@ -364,20 +382,23 @@ UINT8 check_add(UINT8 receiv_byte)
     return 0;
 }
 
+
 void low_priority interrupt func_interrupt_L(void)
 {
-    DEBUG_PIN = 1;
+    //DEBUG_PIN = 1;
     UART_PORT_HUNDLER(1);
     UART_PORT_HUNDLER(2);
-    DEBUG_PIN = 0;
+    //DEBUG_PIN = 0;
 }
 
 void high_priority interrupt func_interrupt_h(void)
 {
-    //DEBUG_PIN = 1;
+    DEBUG_PIN = 1;
 
     if (CCP4IF)
     {
+        max_delay_blink(1);
+        max_delay_blink(2);
         UART_TRANSSMITED_ENDED(1);
         UART_TRANSSMITED_ENDED(2);
         static UINT8 internal_timer_1ms = 0;
@@ -386,8 +407,8 @@ void high_priority interrupt func_interrupt_h(void)
             internal_timer_1ms = 0;
             global_timer_ms++;
         }
-        global_timer_ms++;
+        //global_timer_ms++;
         CCP4IF = 0;
     }
-    //DEBUG_PIN = 0;
+    DEBUG_PIN = 0;
 }

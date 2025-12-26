@@ -17,18 +17,18 @@
 
 //#define TX_OR_RX_(x) (TX_OR_RX_##x)
 //замениы пинов
-#define TX_OR_RX_1 LATC1
-#define TX_OR_RX_2 LATC1
+//#define TX_OR_RX_1 LATC1
+//#define TX_OR_RX_2 LATC1
 
-//#define TX_OR_RX_1 LATC5
-//#define TX_OR_RX_2 LATB5
+#define TX_OR_RX_1 LATC5
+#define TX_OR_RX_2 LATB5
 //режимы приемопередатчика
 #define TRANSSMIT 1
 #define RECIVE 0
 
 //инициализация скорости передачи 
 #define CALCUL_SPEED_DEV_BIT_S(x) (x == 0?9600:x== 1? 14400: x==2?19200:x==3?28800:x== 4?38400:x== 5?57600:x== 6?76800:115200)
-#define TIME_OUT_FRAME_MKS 100
+#define TIME_OUT_FRAME_MKS 50
 #define CALCUL_T_3_5(x) (((UINT32)49500000*2/((UINT32)x*TIME_OUT_FRAME_MKS)+1)/2)
 #define CALCUL_T_1_5(x) (((UINT32)27500000*2/((UINT32)x*TIME_OUT_FRAME_MKS) +1)/2)
 #define CALCUL_SPBRG(x) (((UINT32)FREQ_OS_GZ*2/((UINT32)x*4) +1)/2 - 1)

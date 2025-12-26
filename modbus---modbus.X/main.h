@@ -19,11 +19,6 @@
 #define PNP_PIN_LEVEL 1
 #define MAX_INDEX_MAIN_P 6
 
-//коды режимов работы счетчика импульсов
-#define _1_Ch 0
-#define _2_Ch 1
-#define _4_Ch 2
-
 //замены пинов
 #define DEBUG_PIN LATA4
 
@@ -48,19 +43,42 @@
 #define IN 1
 #define OUT 0
 
-
 #define _XTAL_FREQ FREQ_OS_GZ //для правильной работы задержки __delay_us()
-
-
 
 //адреса записи в ипром
 #define BEGIN_EEPR_ADD 32
+
+#define max_delay_blink(x)\
+        do{\
+            static UINT16 delay_blink_LED = 0;\
+            static UINT8 led_hide_completed = 0;\
+            if (led_hide_completed)\
+            {\
+                if (led_##x##_state)\
+                {\
+                    LED_##x = 1;\
+                    if (++delay_blink_LED > 80000 / PERIOD_INTERRUPT_MKS)\
+                    {\
+                        LED_##x = 0;\
+                        led_##x##_state = 0;\
+                        delay_blink_LED = 0;\
+                        led_hide_completed = 0;\
+                    }\
+                }\
+            } else\
+            {\
+                 if (++delay_blink_LED > 80000 / PERIOD_INTERRUPT_MKS)\
+                 {\
+                    led_hide_completed = 1;\
+                    delay_blink_LED = 0;\
+                 }\
+            }\
+        }while (0)
 
 #define UART_PORT_HUNDLER(x)\
 do{\
     if (TX##x##IE && TX##x##IF)\
     {\
-        LED_##x = 1;\
         if (Number_Tx_Byte[x-1] < size_Tx_frame[x-1])\
         {\
             if (parity[x-1] == 1)\
@@ -71,6 +89,7 @@ do{\
             Number_Tx_Byte[x-1]++;\
             if (Number_Tx_Byte[x-1] == size_Tx_frame[x-1])\
             {\
+                led_##x##_state = 1;\
                 TX##x##IE = 0;\
                 Switch_Transsmit_Recieve[x-1] = 1;\
             }\
@@ -95,6 +114,7 @@ do{\
             {\
                 if (check_add(receiv_byte))\
                 {\
+                    led_##x##_state = 1;\
                     Rx_Tx_data[x-1][0] = receiv_byte;\
                     Number_Rx_Byte[x-1] = 1;\
                 }\
@@ -115,7 +135,6 @@ do{\
         if (Switch_Transsmit_Recieve[x-1] && TXSTA##x##bits.TRMT)\
         {\
             TX_OR_RX_##x = RECIVE;\
-            LED_##x = 0;\
             modbus_timeOut[x-1].timer = TimeOutFrame_3_5[x-1];\
             Switch_Transsmit_Recieve[x-1] = 0;\
             RCSTA1bits.CREN = RCSTA2bits.CREN = 1;\
@@ -132,7 +151,7 @@ do{\
         }while(0)
 
 
-#define BLINKER_MAC(blinker, time_on, time_off) \
+#define BLINKER_MAC(blinker, time_on, time_off, delta_time_ms) \
 do{\
     if (blinker.state)\
     {\
@@ -153,11 +172,11 @@ do{\
         }\
     }}while(0)
 
-typedef struct {
-    UINT16 cnt;
-    UINT8 state : 1;
-    UINT8 period : 1;
-} blinker_t;
+    typedef struct {
+        UINT16 cnt;
+        UINT8 state : 1;
+        UINT8 period : 1;
+    } blinker_t;
 
 typedef void (*automat_state_t)(void);
 

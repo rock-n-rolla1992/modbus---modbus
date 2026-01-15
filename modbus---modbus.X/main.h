@@ -7,9 +7,9 @@
 #include "st_func_peripheral.h"
 
 //версия софта
-#define SOFT_VER_S0 0
+#define SOFT_VER_S0 1
 #define SOFT_VER_S1 0
-#define SOFT_VER_S2 1
+#define SOFT_VER_S2 0
 
 #define DEBUG 1
 
@@ -97,8 +97,10 @@ do{\
     } else if (RC##x##IE && RC##x##IF)\
     {\
         UINT8 receiv_byte = RCREG##x;\
-        UINT8 time_receiv_byte = modbus_timeOut[x-1].timer;\
-        modbus_timeOut[x-1].timer -= time_receiv_byte;\
+        INTCONbits.GIEH = 0;\
+        UINT16 time_receiv_byte = modbus_timeOut[x-1].timer;\
+        modbus_timeOut[x-1].timer = 0;\
+        INTCONbits.GIEH = 1;\
         if (Number_Rx_Byte[x-1])\
         {\
             if (time_receiv_byte > TimeOutFrame_1_5[x-1])\
@@ -139,7 +141,7 @@ do{\
             Switch_Transsmit_Recieve[x-1] = 0;\
             RCSTA1bits.CREN = RCSTA2bits.CREN = 1;\
         }\
-        if (modbus_timeOut[x-1].timer != 0xFF)\
+        if (modbus_timeOut[x-1].timer != 0xFFFF)\
         {\
             static UINT8 internal_timer_time_Out = 0;\
             if (++internal_timer_time_Out >= TIME_OUT_FRAME_MKS / PERIOD_INTERRUPT_MKS)\

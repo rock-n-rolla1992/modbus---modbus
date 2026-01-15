@@ -10,8 +10,8 @@ UINT8 Number_Rx_Byte[2] = {0};
 UINT8 Number_Tx_Byte[2] = {0};
 UINT8 size_Tx_frame[2] = {0};
 //bit volatile Start_Recive = 0;
-UINT8 TimeOutFrame_1_5[2] = {0};
-UINT8 TimeOutFrame_3_5[2] = {0};
+UINT16 TimeOutFrame_1_5[2] = {0};
+UINT16 TimeOutFrame_3_5[2] = {0};
 UINT8 Error_Recive_1_5[2] = {0};
 
 
@@ -22,15 +22,14 @@ const MB_Set_t MB_Set[] = {
     init_MB(0, 1, 1, 0, 0, 1, lock_signal_reg) //блокировка управления по модбасу
 
     init_MB(100, 1, 1, 1, OWN_ADDR_DEF_VAL, 247, own_address_reg) //собственный адрес
-    init_MB(101, 1, 1, 0, BOUD_DEF_VAL, 7, baud_rate_reg[0]) //бодрейт (0 - 9600/1 -14400/2 - 19200/3 - 28800/4 - 38400/5 - 57600/6-76800/7-115200)
+    init_MB(101, 1, 1, 0, BOUD_DEF_VAL, 10, baud_rate_reg[0]) //бодрейт 0-1200/1-2400/2-4800/3-9600/4-14400/5-19200/6-28800/7-38400/8-57600/9-76800/10-115200
     init_MB(102, 1, 1, 0, PARITY_DEF_VAL, 2, parity_reg[0]) //контроль четности (0 - нет / 1 - четность / 2 - нечетность)
 
     init_MB(106, 1, 0, 0, 0, 0xFFFF, err_conf) //ошибка записи конфигурации
     init_MB(107, 1, 0, 0, 0, 1, cfg_save) //сохранение конфигурации
 
-    init_MB(201, 1, 1, 0, BOUD_DEF_VAL, 7, baud_rate_reg[1]) //бодрейт (0 - 9600/1 -14400/2 - 19200/3 - 28800/4 - 38400/5 - 57600/6-76800/7-115200)
+    init_MB(201, 1, 1, 0, BOUD_DEF_VAL, 10, baud_rate_reg[1]) //бодрейт (0 - 9600/1 -14400/2 - 19200/3 - 28800/4 - 38400/5 - 57600/6-76800/7-115200)
     init_MB(202, 1, 1, 0, PARITY_DEF_VAL, 2, parity_reg[1]) //контроль четности (0 - нет / 1 - четность / 2 - нечетность)
-
 
     init_MB(300, 1, 1, 1, 255, 255, add_dev[0]) //пропускаемый (1 -247)
     init_MB(301, 1, 1, 1, 255, 255, add_dev[1]) //пропускаемый (1 -247)

@@ -13,7 +13,7 @@
 
 #define PARITY_DEF_VAL 1
 #define OWN_ADDR_DEF_VAL 247
-#define BOUD_DEF_VAL 2 
+#define BOUD_DEF_VAL 5
 
 //#define TX_OR_RX_(x) (TX_OR_RX_##x)
 //замениы пинов
@@ -27,8 +27,8 @@
 #define RECIVE 0
 
 //инициализация скорости передачи 
-#define CALCUL_SPEED_DEV_BIT_S(x) (x == 0?9600:x== 1? 14400: x==2?19200:x==3?28800:x== 4?38400:x== 5?57600:x== 6?76800:115200)
-#define TIME_OUT_FRAME_MKS 50
+#define CALCUL_SPEED_DEV_BIT_S(x) ((x == 0)?1200:(x == 1)? 2400:(x ==2)?4800:(x ==3)?9600:(x == 4)?14400:(x == 5)?19200:(x == 6)?28800:(x == 7)?38400:(x == 8)?57600:(x == 9)?76800:115200)
+#define TIME_OUT_FRAME_MKS 25
 #define CALCUL_T_3_5(x) (((UINT32)49500000*2/((UINT32)x*TIME_OUT_FRAME_MKS)+1)/2)
 #define CALCUL_T_1_5(x) (((UINT32)27500000*2/((UINT32)x*TIME_OUT_FRAME_MKS) +1)/2)
 #define CALCUL_SPBRG(x) (((UINT32)FREQ_OS_GZ*2/((UINT32)x*4) +1)/2 - 1)
@@ -74,7 +74,9 @@ if (TX_OR_RX_##index_mb == RECIVE)\
 INTCONbits.GIEL = 0;\
 UINT8 temp_Number_Rx_Byte = Number_Rx_Byte[index_mb-1];\
 UINT8 temp_Error_Recive_1_5 = Error_Recive_1_5[index_mb-1];\
-UINT8 temp_mtO = modbus_timeOut[index_mb-1].timer;\
+INTCONbits.GIEH = 0;\
+UINT16 temp_mtO = modbus_timeOut[index_mb-1].timer;\
+INTCONbits.GIEH = 1;\
 INTCONbits.GIEL = 1;\
 if (temp_Number_Rx_Byte && (temp_mtO > TimeOutFrame_3_5[index_mb-1]))\
 {\
@@ -113,7 +115,7 @@ typedef struct {
 } MB_Set_t;
 
 typedef struct {
-    UINT8 timer;
+    UINT16 timer;
     //UINT8 overflow_flag;
 } modbus_timeOut_t;
 
@@ -125,8 +127,8 @@ extern UINT8 Number_Rx_Byte[2];
 extern UINT8 Number_Tx_Byte[2];
 extern UINT8 size_Tx_frame[2];
 //bit volatile Start_Recive = 0;
-extern UINT8 TimeOutFrame_1_5[2];
-extern UINT8 TimeOutFrame_3_5[2];
+extern UINT16 TimeOutFrame_1_5[2];
+extern UINT16 TimeOutFrame_3_5[2];
 extern UINT8 Error_Recive_1_5[2];
 
 
